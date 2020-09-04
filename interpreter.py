@@ -28,6 +28,7 @@ ELSE	      ='ELSE'
 EQUALITY      = 'EQUALITY'
 LESSTHAN      ='LESSTHAN'
 MORETHAN      ='MORETHAN'
+FOR 		  ='FOR'
 
 
 class Token(object):
@@ -54,6 +55,7 @@ RESERVED_KEYWORDS = {
     'BEGIN': Token('BEGIN', 'BEGIN'),
     'IF': Token('IF', 'IF'),
     'ELSE': Token('ELSE', 'ELSE'),
+     'FOR': Token('FOR', 'FOR'),
     'END': Token('END', 'END')
 }
 
@@ -234,6 +236,11 @@ class If(AST):
     def __init__(self):
         self.children = []
 
+class For(AST):
+    def __init__(self):
+        self.children = []
+
+
 class Comp(AST):
     def __init__(self, left, op, right):
         self.left = left
@@ -380,11 +387,26 @@ class Parser(object):
         elif self.current_token.type == IF:
         	node=self.if_statement()
 
+        elif self.current_token.type == FOR:
+        	node=self.for_statement()
+
         elif self.current_token.type == ID:
             node = self.assignment_statement()
         else:
             node = self.empty()
         return node
+
+    def for_statement(self):
+    	obj = For();
+    	self.eat(FOR);
+    	self.eat(LPAREN)
+    	num=Num(self.current_token);
+    	self.eat(INTEGER_CONST)
+    	self.eat(RPAREN)
+    	node=self.statement();
+    	obj.children.append(num);
+    	obj.children.append(node);
+    	return obj
 
     def if_statement(self):
     	obj = If();
@@ -539,6 +561,9 @@ class Interpreter(NodeVisitor):
     	else :
     		return  self.visit(node.left) > self.visit(node.right )
 
+    def visit_For(self,node):
+    	for i in range(self.visit(node.children[0])):
+    		self.visit(node.children[1])
 
     def visit_Num(self, node):
         return node.value
@@ -601,10 +626,8 @@ BEGIN {Part10}
    END;
    x := 11;
    y := 20 / 7 + 3.14;
-   IF(1 > 2)
-   x:=9
-   ELSE
-   x:=0 
+   FOR(4)
+   x:=x+1 
 END.  {Part10}
 """
     #text = open(sys.argv[1], 'r').read()
